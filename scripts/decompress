@@ -1,0 +1,10 @@
+args=$@
+mvn package
+
+set -o xtrace
+
+mvn exec:java\
+ -Dexec.mainClass="Decompress"\
+ -Dexec.args="${args}"
+
+set +o xtrace
