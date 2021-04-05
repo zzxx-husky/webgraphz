@@ -1,0 +1,14 @@
+scriptdir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+cd ${scriptdir}/../
+
+args=$@
+mvn package
+
+set -o xtrace
+
+mvn exec:java\
+ -Dexec.mainClass="DecompressLabeled"\
+ -Dexec.args="${args}"
+
+set +o xtrace
