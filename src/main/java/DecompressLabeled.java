@@ -1,14 +1,14 @@
+import it.unimi.dsi.fastutil.longs.LongBigList;
 import it.unimi.dsi.fastutil.longs.LongBigListIterator;
 import it.unimi.dsi.law.webgraph.CompressedIntLabel;
 import it.unimi.dsi.webgraph.labelling.ArcLabelledImmutableGraph;
 import it.unimi.dsi.webgraph.labelling.ArcLabelledNodeIterator;
-import it.unimi.dsi.webgraph.labelling.BitStreamArcLabelledImmutableGraph;
-import it.unimi.dsi.fastutil.longs.LongBigList;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 public class DecompressLabeled {
     private static void printHelpMessage() {
@@ -17,10 +17,14 @@ public class DecompressLabeled {
     }
 
     public static void main(String[] args) throws Exception {
-    	String graphFilePath = args[0];
+        if (Arrays.asList(args).contains("help") || args.length < 2) {
+            printHelpMessage();
+        }
+
+        String graphFilePath = args[0];
         String outputFilePath = args[1];
 
-    	if (!new File(graphFilePath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX +".offsets").exists()) {
+        if (!new File(graphFilePath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX + ".offsets").exists()) {
             System.out.println("Offsets not found for " + graphFilePath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
             BuildOffsets.run(graphFilePath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
             System.out.println("Offsets built for " + graphFilePath + ArcLabelledImmutableGraph.UNDERLYINGGRAPH_SUFFIX);
@@ -30,13 +34,13 @@ public class DecompressLabeled {
         int numNodes = graph.numNodes();
         System.out.println("Successfully load graph " + graphFilePath + ". Number of nodes: " + numNodes + ".");
 
-        File nodeLabelFile = new File(outputFilePath + ".nodelabels");
+        File nodeLabelFile = new File(outputFilePath + ".node_labels");
         assert nodeLabelFile.exists() || nodeLabelFile.createNewFile();
 
         PrintWriter nodeWriter = new PrintWriter(new BufferedWriter(new FileWriter(nodeLabelFile)));
 
         ArcLabelledNodeIterator.LabelledArcIterator it = graph.successors(0);
-        LongBigList nodeLabelList = ((CompressedIntLabel)it.label()).nodeLabels;
+        LongBigList nodeLabelList = ((CompressedIntLabel) it.label()).nodeLabels;
         LongBigListIterator labelIt = nodeLabelList.iterator();
         int nodeIndex = 0;
 
@@ -50,28 +54,28 @@ public class DecompressLabeled {
         }
         System.out.println("Finish writing node label file");
 
-        File edgeLabelFile = new File(outputFilePath + ".edge");
+        File edgeLabelFile = new File(outputFilePath + ".labeled_edges");
         assert edgeLabelFile.exists() || edgeLabelFile.createNewFile();
 
-    	PrintWriter edgeWriter = new PrintWriter(new BufferedWriter(new FileWriter(edgeLabelFile)));
+        PrintWriter edgeWriter = new PrintWriter(new BufferedWriter(new FileWriter(edgeLabelFile)));
 
         System.out.println("Start writing edge file");
-    	int prog = 10;
+        int prog = 10;
         for (int i = 0; i < numNodes; i++) {
-             ArcLabelledNodeIterator.LabelledArcIterator succ = graph.successors(i);
-             for (int d = graph.outdegree(i); d > 0; d--) {
-             	int label = (int)succ.label().get();
-             	  edgeWriter.write(String.valueOf(i));
-             	  edgeWriter.write(' ');
+            ArcLabelledNodeIterator.LabelledArcIterator succ = graph.successors(i);
+            for (int d = graph.outdegree(i); d > 0; d--) {
+                int label = (int) succ.label().get();
+                edgeWriter.write(String.valueOf(i));
+                edgeWriter.write(' ');
                 edgeWriter.write(String.valueOf(label));
                 edgeWriter.write(' ');
                 edgeWriter.write(String.valueOf(succ.nextInt()));
                 edgeWriter.write('\n');
-             }
-             if (i * 100.0 / numNodes >= prog) {
-                 System.out.println("Convertion progress: " + i * 100.0 / numNodes + "%.");
-                 prog += 10;
-             }
-         }
+            }
+            if (i * 100.0 / numNodes >= prog) {
+                System.out.println("Convertion progress: " + i * 100.0 / numNodes + "%.");
+                prog += 10;
+            }
+        }
     }
 }
